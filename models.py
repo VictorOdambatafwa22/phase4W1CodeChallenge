@@ -5,41 +5,51 @@ from sqlalchemy.orm import validates
 db = SQLAlchemy()
 
 
-Restaurant_pizzas = db.Table(
-    "Restaurant_pizzas",
-    db.Column("Restaurant_id", db.ForeignKey("Restaurant.id"), primary_key=True),
-    db.Column("Pizza_id", db.ForeignKey("Pizza.id"), primary_key=True),
-    db.Column("Price", db.String),
-    db.Column("created_at", db.DateTime, server_default=db.func.now()),
-    db.Column("updated_at", db.DateTime, onupdate=db.func.now())
-)
+class Restaurant_pizza(db.Model, SerializerMixin):
+    __tablename__ = 'restaurant_pizzas'
 
+    serialize_rules = ('-restaurant.restaurant_pizzas', '-pizza.restaurant_pizzas',)
+
+    id = Column(Integer(), primary_key=True)
+    pizza_id = Column(Integer(), ForeignKey('pizzas.id'))
+    restaurant_id = Column(Integer(), ForeignKey('restaurants.id'))
+    price = Column(Integer())
+    created_at= db.Column(db.DateTime, server_default=db.func.now())
+    updated_at = db.Column(db.DateTime, onupdate=db.func.now())
+    
+    restaurants = relationship('Book', back_populates='restaurant_pizzas')
+    pizza = relationship('Pizza', back_populates='restaurant_pizzas')
+
+    def __repr__(self):
+
+        return f'Restaurant_pizza(id={self.id}'
+         
 
 class Restaurant(db.Model, SerializerMixin):
-    __tablename__ = 'Restaurant'
+    __tablename__ = 'restaurants'
 
     id = db.Column(db.Integer, primary_key=True)
     name= db.Column(db.String)
-    super_name= db.Column(db.String)
-    created_at= db.Column(db.DateTime, server_default=db.func.now())
-    updated_at = db.Column(db.DateTime, onupdate=db.func.now())
-    Pizza = db.relationship("Pizza", secondary=Restaurant_pizzas, back_populates="Restaurants")
-    serialize_rules = ("-Pizza.Restaurants",)
+    address= db.Column(db.String)
+
+    restaurant_pizzas = relationship('Restaurant_pizza', back_populates='restaurant')
+    serialize_rules = ('-restaurant_pizzas.restaurant',)
 
     def __repr__(self):
-        return f"Restaurants {self.name} has {self.super_name}."
+        return f'Restaurants {self.name}'
     
 
 class Pizza(db.Model, SerializerMixin):
-    __tablename__ = "Pizza"
+    __tablename__ = "pizzas"
 
     id = db.Column(db.Integer, primary_key=True)
     name= db.Column(db.String)
-    description= db.Column(db.String)
+    ingredients= db.Column(db.String)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, onupdate=db.func.now())
-    Restaurant = db.relationship("Restaurant", secondary=Restaurant_pizzas, back_populates="pizza")
-    serialize_rules = ("-Restaurant.pizza",)
+
+    restaurant_pizzas = relationship('Restaurant_pizza', back_populates='pizza')
+    serialize_rules = ('-restaurant_pizzas.pizza',)
 
     def __repr__(self):
-        return f"Pizza {self.name} was created at {self.created_at}."
+        return f'Pizza {self.name}'
