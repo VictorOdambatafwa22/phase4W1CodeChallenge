@@ -14,6 +14,7 @@ Restaurant_pizzas = db.Table(
     db.Column("updated_at", db.DateTime, onupdate=db.func.now())
 )
 
+
 class Restaurant(db.Model, SerializerMixin):
     __tablename__ = 'Restaurant'
 
