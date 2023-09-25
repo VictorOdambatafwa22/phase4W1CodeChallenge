@@ -10,10 +10,10 @@ class Restaurant_pizza(db.Model, SerializerMixin):
 
     serialize_rules = ('-restaurant.restaurant_pizzas', '-pizza.restaurant_pizzas',)
 
-    id = Column(Integer(), primary_key=True)
-    pizza_id = Column(Integer(), ForeignKey('pizzas.id'))
-    restaurant_id = Column(Integer(), ForeignKey('restaurants.id'))
-    price = Column(Integer())
+    id = db.Column(db.Integer(), primary_key=True)
+    pizza_id = db.Column(db.Integer(), ForeignKey('pizzas.id'))
+    restaurant_id = db.Column(db.Integer(), ForeignKey('restaurants.id'))
+    price = db.Column(db.Integer())
     created_at= db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, onupdate=db.func.now())
     
