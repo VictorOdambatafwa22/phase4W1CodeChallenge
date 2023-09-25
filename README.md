@@ -73,7 +73,7 @@ To make a contribution to the code used or any suggestions you can click on the 
    
  ## License
 
-Copyright (c) 2022 Group 6 Moringa School
+Copyright (c) 2023 Victor Odambatafwa
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files , to deal

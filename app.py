@@ -13,51 +13,56 @@ db.init_app(app)
 
 @app.route('/')
 def home():
-    return make_response(jsonify({"msg": "Welcome to Pizzas api"}), 200)
+    return make_response(
+        jsonify({"Pizza Restaurant"}), 200)
 
-#Get Rstaurants
+
 @app.route("/Restaurants")
 def Restaurants():
     Restaurants = [Restaurant.to_dict() for Restaurant in Restaurant.query.all()]
-    return make_response(jsonify({"Restaurants": Restaurants}), 200)
+    return make_response(
+        jsonify({"Restaurants": Restaurants}), 200)
 
-# Get Restaurants by id
+
 @app.route("/Restaurants/<int:id>")
 def Restaurants_by_id(id):
     Restaurants = Restaurant.query.filter_by(id=id).first()
-    if not Restaurant:
-        return make_response(jsonify({"error": "Restaurant not found"}), 404)
+    if Restaurant:
+        return make_response(
+            jsonify(Restaurant.to_dict()), 200)          
     else:
-        return make_response(jsonify(Restaurant.to_dict()), 200)
+        return make_response(
+            
+            jsonify({"error": "Restaurant does not exist"}), 404)
 
-# get Pizza
 @app.route("/Pizza")
 def Pizza():
     Pizza = [Pizza.to_dict() for Pizza in Pizza.query.all()]
-    return make_response(jsonify({"Pizza": Pizza}), 200)   
+    return make_response(
+        jsonify({"Pizza": Pizza}), 200)   
 
-# get Pizza by id
 @app.route("/Pizza/<int:id>", methods=["GET", "PATCH"])
 def Pizza_by_id(id):
     Pizza = Pizza.query.filter_by(id=id).first()
     if not Pizza:
-        return make_response(jsonify({"error": "Pizza not found"}), 404)
+        return make_response(
+            jsonify({"error": "Pizza not found"}), 404)
     else:
         if request.method == "GET":
-            return make_response(jsonify(Pizza.to_dict()), 200)
+            return make_response(
+                jsonify(Pizza.to_dict()), 200)
         
-        # update description
         elif request.method == "PATCH":
             description = request.form.get("description")
-            if description and len(description) < 20:
-                return make_response(jsonify({"error":"[validation errors]"}), 400)
+            if len(description) < 20:
+                return make_response(
+                    jsonify({"error":"[validation errors]"}), 400)
             
             setattr(Pizza, "description", description)
             db.session.add(Pizza)
             db.session.commit()
             return make_response(jsonify(Pizza.to_dict()), 200)
 
-# post Restaurant_pizzas
 @app.route("/Restaurant_pizzas", methods=["POST"])
 def create_Restaurant_pizzas():
         
