@@ -22,6 +22,7 @@ def Restaurants():
     Restaurants = [Restaurant.to_dict() for Restaurant in Restaurant.query.all()]
     return make_response(
         jsonify({"Restaurants": Restaurants}), 200)
+        
 
 
 @app.route("/Restaurants/<int:id>")
