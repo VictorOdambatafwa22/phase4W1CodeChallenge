@@ -19,24 +19,20 @@ with app.app_context():
 
     db.session.add_all(pizzas)
 
-    restaurant_pizzas = []
-    prices = [10, 20, 35, 18, 41, 29, 13]
-
-    for n in range(25):
-        e = Restaurant_pizza(price=rc(prices))
-        restaurant_pizzas.append(e)
-
-    db.session.add_all(restaurant_pizzas)
-
     restaurants = []
-    address = ['Lion', 'Tiger', 'Bear', 'Hippo', 'Rhino', 'Elephant', 'Ostrich',
-        'Snake', 'Monkey']
+    for i in range(25):
+        r = Restaurant(name=fake.company(), address=fake.address())
+        restaurants.append(r)
 
-    for n in range(200):
-        name = fake.first_name()
-        while name in [a.name for a in restaurants]:
-            name=fake.first_name()
-        a = Restaurant(name=name, address=rc(address))
-        a.pizza = rc(pizzas)
-        a.restaurant_pizza = rc(restaurant_pizzas)
-        restaurants.append(a)
+    db.session.add_all(restaurants)    
+
+    restaurant_pizzas = []
+    for i in range(30):
+        rp = Restaurant_pizza(
+            price=randint(1, 30), pizza_id=randint(1, 10), restaurant_id=randint(1, 10)
+        )
+        restaurant_pizzas.append(rp)
+
+    db.session.add_all(restaurant_pizzas)   
+
+    db.session.commit()
