@@ -1,6 +1,6 @@
 from flask import Flask, make_response, jsonify, request
 from flask_migrate import Migrate
-
+#from flask_restful import Resource,Api
 from models import db, Restaurant, Pizza, Restaurant_pizza
 
 app = Flask(__name__)
@@ -14,86 +14,96 @@ db.init_app(app)
 @app.route('/')
 def home():
     return make_response(
-        jsonify({"Pizza Restaurant"}), 200)
+        jsonify({"msg":"Pizza Restaurant"}), 200)
 
 
-@app.route("/Restaurants")
+@app.route("/restaurants")
 def Restaurants():
-    Restaurants = [Restaurant.to_dict() for Restaurant in Restaurant.query.all()]
-    return make_response(
-        jsonify({"Restaurants": Restaurants}), 200)
-        
+    restaurants = [{
+            "id":restaurant.id,
+            "name":restaurant.name,
+            "address":restaurant.address,
+        } for restaurant in Restaurant.query.all()]
+    return make_response(jsonify({"Restaurants": restaurants}), 200)
 
-
-@app.route("/Restaurants/<int:id>")
-def Restaurants_by_id(id):
-    Restaurants = Restaurant.query.filter_by(id=id).first()
-    if Restaurant:
-        return make_response(
-            jsonify(Restaurant.to_dict()), 200)          
-    else:
-        return make_response(
             
-            jsonify({"error": "Restaurant does not exist"}), 404)
+@app.route("/pizzas")
+def pizza():
+    pizzas = [{
+            "id":pizza.id,
+            "name":pizza.name,
+            "ingredients":pizza.ingredients,           
+        } for pizza in Pizza.query.all()]
+    return make_response(jsonify({"Pizzas": pizzas}), 200)
 
-@app.route("/Pizza")
-def Pizza():
-    Pizza = [Pizza.to_dict() for Pizza in Pizza.query.all()]
-    return make_response(
-        jsonify({"Pizza": Pizza}), 200)   
-
-@app.route("/Pizza/<int:id>", methods=["GET", "PATCH"])
-def Pizza_by_id(id):
-    Pizza = Pizza.query.filter_by(id=id).first()
-    if not Pizza:
-        return make_response(
-            jsonify({"error": "Pizza not found"}), 404)
-    else:
-        if request.method == "GET":
-            return make_response(
-                jsonify(Pizza.to_dict()), 200)
-        
-        elif request.method == "PATCH":
-            description = request.form.get("description")
-            if len(description) < 20:
-                return make_response(
-                    jsonify({"error":"[validation errors]"}), 400)
-            
-            setattr(Pizza, "description", description)
-            db.session.add(Pizza)
+@app.route("/restaurants/<int:id>",methods=["GET", "DELETE"])
+def restaurant_view(id):
+    if request.method =="GET":
+        restaurant = Restaurant.query.filter_by(id=id).first()
+        if restaurant:
+            pizzas = [{"id": pizza.id, "name": pizza.name, "ingredients": pizza.ingredients} for pizza in restaurant.pizzas]
+            response = {
+                "id":restaurant.id,
+                "name":restaurant.name,
+                "address":restaurant.address,
+                "pizzas": pizzas
+            }
+            return make_response(jsonify(response), 200 )
+        else: 
+            return make_response(jsonify({"error": "Restaurant not found"}), 404 )
+   
+    elif request.method =="DELETE":
+        restaurant = Restaurant.query.filter_by(id=id).first() 
+        if restaurant:
+            Restaurant_pizza.query.filter_by(restaurant_id=id).delete()
+            db.session.delete(restaurant)
             db.session.commit()
-            return make_response(jsonify(Pizza.to_dict()), 200)
+            return make_response("", 204 )
+        else:
+            return make_response(jsonify({"error": "Restaurant not found"}), 404 )
 
-@app.route("/Restaurant_pizzas", methods=["POST"])
-def create_Restaurant_pizzas():
-        
-        if request.method == "POST":
-        
-            if request.form.get("price") not in ["High", "Low", "Average"]:
-                return make_response(jsonify({"errors": ["validation errors"]}),400)
-            
-            
-            price = request.form.get("price")
-            Pizza_id = request.form.get("Pizza_id")
-            Restaurant_id =  request.form.get("Restaurant_id")
 
-            new_Restaurant_pizzas = Restaurant_pizzas.insert().values(
-                price = price ,
-                Pizza_id= Pizza_id,
-                Restaurant_id = Restaurant_id,
+
+
+@app.route("/restaurant_pizzas", methods=["GET", "POST"])
+def restaurant_pizaas_view():
+    if request.method =="GET":
+        restaurants_pizzas = [{
+            "id":restaurantpizza.id,
+            "price":restaurantpizza.price,
+            "pizza_id":restaurantpizza.pizza_id,
+            "restaurant_id":restaurantpizza.restaurant_id,
+            "created_at":str(restaurantpizza.created_at),
+            "updated_at":str(restaurantpizza.updated_at),
+        } for restaurantpizza in Restaurant_pizza.query.all()]
+        return make_response(jsonify({"Restaurants_pizzas": restaurants_pizzas}), 200)
+    elif request.method =="POST":
+        try:
+            data = request.get_json()
+            rp = Restaurant_pizza(
+                price=data["price"],
+                pizza_id=data["pizza_id"],
+                restaurant_id=data["restaurant_id"]
             )
-            db.session.execute(Restaurant_pizzas)
+            db.session.add(rp)
             db.session.commit()
-            
-
-            updated_Restaurant = Restaurant.query.filter_by(id=Restaurant_id).first()
-            response_data = {
-                "id": Pizza.id,
-                "name": Pizza.name,
-                "ingredients": Pizza.ingredients,
+            pizza = Pizza.query.filter_by(id=data["pizza_id"]).first()
+            pizza_dict = {
+                "id": pizza.id,
+                "name": pizza.name,
+                "ingredients": pizza.ingredients
             }
 
-            return make_response(jsonify(response_data), 201)
+            response = make_response(jsonify(pizza_dict), 201)
 
+            return response
+        except ValueError as e:
+            response = make_response(jsonify({"errors": e.args}), 400)
+            return response
+        except Exception as e:
+            response = make_response(jsonify({"errors": e.args}), 400)
+            return response
+
+   
 if __name__ == '__main__':
-    app.run(port=5555)
+    app.run(port=5555,debug=True)
